@@ -36,3 +36,7 @@ Levenshtein
 neo4j
 transformers
 sentence-transformers
+huggingface_hub[cli]
+sacremoses
+protobuf
+bitsandbytes
