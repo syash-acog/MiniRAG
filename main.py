@@ -11,17 +11,17 @@ from minirag.llm.hf import (
 from minirag.utils import EmbeddingFunc
 from transformers import AutoModel, AutoTokenizer
 
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL = "FremyCompany/BioLORD-2023" #nuvocare/WikiMedical_sent_biobert
 
 import argparse
 
 
 def get_args():
     parser = argparse.ArgumentParser(description="MiniRAG")
-    parser.add_argument("--model", type=str, default="PHI")
+    parser.add_argument("--model", type=str, default="bio")
     parser.add_argument("--outputpath", type=str, default="./logs/Default_output.csv")
-    parser.add_argument("--workingdir", type=str, default="./LiHua-World")
-    parser.add_argument("--datapath", type=str, default="./dataset/LiHua-World/data/")
+    parser.add_argument("--workingdir", type=str, default="./input")
+    parser.add_argument("--datapath", type=str, default="./dataset")
     parser.add_argument(
         "--querypath", type=str, default="./dataset/LiHua-World/qa/query_set.csv"
     )
@@ -38,8 +38,10 @@ elif args.model == "GLM":
     LLM_MODEL = "THUDM/glm-edge-1.5b-chat"
 elif args.model == "MiniCPM":
     LLM_MODEL = "openbmb/MiniCPM3-4B"
-elif args.model == "qwen":
-    LLM_MODEL = "Qwen/Qwen2.5-3B-Instruct"
+elif args.model == "biol":
+    LLM_MODEL = "ashishkgpian/BioLlama_codes"
+elif args.model == "bio":
+    LLM_MODEL = "PrunaAI/stanford-crfm-BioMedLM-bnb-4bit-smashed" 
 else:
     print("Invalid model name")
     exit(1)
@@ -61,7 +63,7 @@ rag = MiniRAG(
     llm_model_max_token_size=200,
     llm_model_name=LLM_MODEL,
     embedding_func=EmbeddingFunc(
-        embedding_dim=384,
+        embedding_dim=768,
         max_token_size=1000,
         func=lambda texts: hf_embed(
             texts,
@@ -72,26 +74,29 @@ rag = MiniRAG(
 )
 
 
-# Now indexing
-def find_txt_files(root_path):
-    txt_files = []
+def find_single_txt_file(root_path):
     for root, dirs, files in os.walk(root_path):
         for file in files:
             if file.endswith(".txt"):
-                txt_files.append(os.path.join(root, file))
-    return txt_files
+                return os.path.join(root, file)
+    return None
 
+txt_file = find_single_txt_file(DATA_PATH)
+if txt_file is None:
+    print(f"No .txt file found in {DATA_PATH}")
+    exit(1)
 
-WEEK_LIST = find_txt_files(DATA_PATH)
-for WEEK in WEEK_LIST:
-    id = WEEK_LIST.index(WEEK)
-    print(f"{id}/{len(WEEK_LIST)}")
-    with open(WEEK) as f:
-        rag.insert(f.read())
+print(f"Reading file: {txt_file}")
+with open(txt_file, "r", encoding="utf-8") as f:
+    content = f.read()
+    if not content.strip():
+        print("File is empty")
+        exit(1)
+    rag.insert(content)
 
-# A toy query
-query = 'What does LiHua predict will happen in "The Rings of Power"?'
-answer = (
-    rag.query(query, param=QueryParam(mode="mini")).replace("\n", "").replace("\r", "")
-)
-print(answer)
+# # A toy query
+# query = 'What does LiHua predict will happen in "The Rings of Power"?'
+# answer = (
+#     rag.query(query, param=QueryParam(mode="mini")).replace("\n", "").replace("\r", "")
+# )
+# print(answer)
