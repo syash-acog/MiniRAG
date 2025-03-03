@@ -52,7 +52,7 @@ if not pm.is_installed("torch"):
 if not pm.is_installed("tenacity"):
     pm.install("tenacity")
 
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, GPT2Tokenizer, GPT2LMHeadModel
 from functools import lru_cache
 from tenacity import (
     retry,
@@ -76,6 +76,10 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 @lru_cache(maxsize=1)
 def initialize_hf_model(model_name):
+    
+    os.getenv("HUGGINGFACE_HUB_TOKEN", "")
+
+
     hf_tokenizer = AutoTokenizer.from_pretrained(
         model_name, device_map="auto", trust_remote_code=True
     )
@@ -177,7 +181,7 @@ async def hf_model_complete(
 async def hf_embed(texts: list[str], tokenizer, embed_model) -> np.ndarray:
     device = next(embed_model.parameters()).device
     input_ids = tokenizer(
-        texts, return_tensors="pt", padding=True, truncation=True
+        texts, return_tensors="pt", padding=True, truncation=True, max_length=512
     ).input_ids.to(device)
     with torch.no_grad():
         outputs = embed_model(input_ids)
