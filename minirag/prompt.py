@@ -2,23 +2,30 @@ GRAPH_FIELD_SEP = "<SEP>"
 
 PROMPTS = {}
 
+PROMPTS["DEFAULT_LANGUAGE"] = "English"
 PROMPTS["DEFAULT_TUPLE_DELIMITER"] = "<|>"
 PROMPTS["DEFAULT_RECORD_DELIMITER"] = "##"
 PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
 PROMPTS["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
-PROMPTS["DEFAULT_ENTITY_TYPES"] = ["organization", "person", "location", "event"]
-
+PROMPTS["DEFAULT_ENTITY_TYPES"] = ["gene", "disease", "tissue", "protien", "cell", "symptom"]
 
 PROMPTS["entity_extraction"] = """-Goal-
-Given a text document that is potentially relevant to this activity and a list of entity types, identify all entities of those types from the text and all relationships among the identified entities.
+You are an expert biologist, having done extensive research on automimune diseases and associated targets.
+This text document (a research paper) that is potentially relevant to this activity and a list of entity types, identify all entities of those types from the text and all relationships among the identified entities.
+Remember that you are an expert biologist, consider below criteria for extraction:
+
+1. No dublicate should be extract like entity full name and its abbreviation that should be merge, no seperate extraction.
+2. Spelling variations or formatting differences like plural or singular forms should be merge
+3. Synonyms or alternative names.
+4. Do NOT group sub-types under broader categories. Instead, create separate nodes and establish relationships between them.
 
 -Steps-
 1. Identify all entities. For each identified entity, extract the following information:
-- entity_name: Name of the entity, use same language as input text. If English, capitalized the name.
+- entity_name: Name of the entity, capitalized
 - entity_type: One of the following types: [{entity_types}]
 - entity_description: Comprehensive description of the entity's attributes and activities
-Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>
+Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>)
 
 2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are *clearly related* to each other.
 For each pair of related entities, extract the following information:
@@ -32,7 +39,7 @@ Format each relationship as ("relationship"{tuple_delimiter}<source_entity>{tupl
 3. Identify high-level key words that summarize the main concepts, themes, or topics of the entire text. These should capture the overarching ideas present in the document.
 Format the content-level key words as ("content_keywords"{tuple_delimiter}<high_level_keywords>)
 
-4. Return output in English as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
+4. Return output in english as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
 
 5. When finished, output {completion_delimiter}
 
@@ -40,75 +47,117 @@ Format the content-level key words as ("content_keywords"{tuple_delimiter}<high_
 -Examples-
 ######################
 Example 1:
-
-Entity_types: [person, technology, mission, organization, location]
+    
+Entity_types: [gene,disease]
 Text:
-while Alex clenched his jaw, the buzz of frustration dull against the backdrop of Taylor's authoritarian certainty. It was this competitive undercurrent that kept him alert, the sense that his and Jordan's shared commitment to discovery was an unspoken rebellion against Cruz's narrowing vision of control and order.
+It is increasingly being appreciated that multiple autoimmune diseases share common susceptibility genes.
 
-Then Taylor did something unexpected. They paused beside Jordan and, for a moment, observed the device with something akin to reverence. “If this tech can be understood..." Taylor said, their voice quieter, "It could change the game for us. For all of us.”
+The tumour necrosis factor ligand superfamily member 4 gene (TNFSF4, OX40L), which encodes for the T cell costimulatory molecule OX40 ligand, has been identified as a susceptibility gene for the development of systemic lupus erythematosus (SLE).
 
-The underlying dismissal earlier seemed to falter, replaced by a glimpse of reluctant respect for the gravity of what lay in their hands. Jordan looked up, and for a fleeting heartbeat, their eyes locked with Taylor's, a wordless clash of wills softening into an uneasy truce.
-
-It was a small transformation, barely perceptible, but one that Alex noted with an inward nod. They had all been brought here by different paths
-################
+Accordingly, the aim of the current study was to investigate the possible association of the TNFSF4 gene region with systemic sclerosis, an autoimmune disease that leads to the development of cutaneous and visceral fibrosis.
+######################
 Output:
-("entity"{tuple_delimiter}"Alex"{tuple_delimiter}"person"{tuple_delimiter}"Alex is a character who experiences frustration and is observant of the dynamics among other characters."){record_delimiter}
-("entity"{tuple_delimiter}"Taylor"{tuple_delimiter}"person"{tuple_delimiter}"Taylor is portrayed with authoritarian certainty and shows a moment of reverence towards a device, indicating a change in perspective."){record_delimiter}
-("entity"{tuple_delimiter}"Jordan"{tuple_delimiter}"person"{tuple_delimiter}"Jordan shares a commitment to discovery and has a significant interaction with Taylor regarding a device."){record_delimiter}
-("entity"{tuple_delimiter}"Cruz"{tuple_delimiter}"person"{tuple_delimiter}"Cruz is associated with a vision of control and order, influencing the dynamics among other characters."){record_delimiter}
-("entity"{tuple_delimiter}"The Device"{tuple_delimiter}"technology"{tuple_delimiter}"The Device is central to the story, with potential game-changing implications, and is revered by Taylor."){record_delimiter}
-("relationship"{tuple_delimiter}"Alex"{tuple_delimiter}"Taylor"{tuple_delimiter}"Alex is affected by Taylor's authoritarian certainty and observes changes in Taylor's attitude towards the device."{tuple_delimiter}"power dynamics, perspective shift"{tuple_delimiter}7){record_delimiter}
-("relationship"{tuple_delimiter}"Alex"{tuple_delimiter}"Jordan"{tuple_delimiter}"Alex and Jordan share a commitment to discovery, which contrasts with Cruz's vision."{tuple_delimiter}"shared goals, rebellion"{tuple_delimiter}6){record_delimiter}
-("relationship"{tuple_delimiter}"Taylor"{tuple_delimiter}"Jordan"{tuple_delimiter}"Taylor and Jordan interact directly regarding the device, leading to a moment of mutual respect and an uneasy truce."{tuple_delimiter}"conflict resolution, mutual respect"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"Jordan"{tuple_delimiter}"Cruz"{tuple_delimiter}"Jordan's commitment to discovery is in rebellion against Cruz's vision of control and order."{tuple_delimiter}"ideological conflict, rebellion"{tuple_delimiter}5){record_delimiter}
-("relationship"{tuple_delimiter}"Taylor"{tuple_delimiter}"The Device"{tuple_delimiter}"Taylor shows reverence towards the device, indicating its importance and potential impact."{tuple_delimiter}"reverence, technological significance"{tuple_delimiter}9){record_delimiter}
-("content_keywords"{tuple_delimiter}"power dynamics, ideological conflict, discovery, rebellion"){completion_delimiter}
-#############################
+("entity"{tuple_delimiter}"TNFSF4""{tuple_delimiter}"gene"{tuple_delimiter}"TNFSF4 encodes a ligand for the T cell costimulatory molecule OX40L."){record_delimiter}
+("entity"{tuple_delimiter}"OX40L"{tuple_delimiter}"gene"{tuple_delimiter}"OX40 Ligand is a T cell costimulatory molecule."){record_delimiter}
+("entity"{tuple_delimiter}"SLE"{tuple_delimiter}"disease"{tuple_delimiter}"Systemic lupus erythematosus, an autoimmune disease."){record_delimiter}
+("entity"{tuple_delimiter}"OX40L"{tuple_delimiter}"gene"{tuple_delimiter}"OX40 Ligand is a T cell costimulatory molecule."){record_delimiter} 
+("relationship"{tuple_delimiter}"TNFSF4"{tuple_delimiter}"OX40L"{tuple_delimiter}"TNFSF4 encodes the ligand for T cell molecule OX40 Ligand."{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"TNFSF4"{tuple_delimiter}"SSC"{tuple_delimiter}"TNFSF4 may be associated with systemic sclerosis."{tuple_delimiter}6){record_delimiter}
+("content_keywords"{tuple_delimiter}"autoimmune diseases, susceptibility genes, TNFSF4 gene, OX40L, systemic lupus erythematosus, SSC, cutaneous fibrosis, visceral fibrosis, T cell costimulatory molecule, tumour necrosis factor ligand superfamily, genetic association"){completion_delimiter}
+############################
 Example 2:
+    
+Entity_types: [gene,disease,cell,protein]
+Text: 
+OX40 and its binding partner, OX40L are members of the TNF receptor superfamily and generate a potent costimulatory signal that upregulates IL-2 production, enhances T cell survival, B cell proliferation, and differentiation and proinflammatory cytokine production (22, 23).
 
-Entity_types: [person, technology, mission, organization, location]
-Text:
-They were no longer mere operatives; they had become guardians of a threshold, keepers of a message from a realm beyond stars and stripes. This elevation in their mission could not be shackled by regulations and established protocols—it demanded a new perspective, a new resolve.
-
-Tension threaded through the dialogue of beeps and static as communications with Washington buzzed in the background. The team stood, a portentous air enveloping them. It was clear that the decisions they made in the ensuing hours could redefine humanity's place in the cosmos or condemn them to ignorance and potential peril.
-
-Their connection to the stars solidified, the group moved to address the crystallizing warning, shifting from passive recipients to active participants. Mercer's latter instincts gained precedence— the team's mandate had evolved, no longer solely to observe and report but to interact and prepare. A metamorphosis had begun, and Operation: Dulce hummed with the newfound frequency of their daring, a tone set not by the earthly
-#############
+OX40 also mediates inactivation of T-reg cell function that unleashes nearby DCs, allowing them to induce an adaptive immune response. OX40 levels were found significantly increased in SSC patients compared to controls and patients with SLE, particularly in the early-onset stage of the disease (24). Two reports confirmed the influence of OX40-ligand (OX40L) polymorphisms in SSC genetic susceptibility, highlighting its role in the disease pathogenesis.
+######################
 Output:
-("entity"{tuple_delimiter}"Washington"{tuple_delimiter}"location"{tuple_delimiter}"Washington is a location where communications are being received, indicating its importance in the decision-making process."){record_delimiter}
-("entity"{tuple_delimiter}"Operation: Dulce"{tuple_delimiter}"mission"{tuple_delimiter}"Operation: Dulce is described as a mission that has evolved to interact and prepare, indicating a significant shift in objectives and activities."){record_delimiter}
-("entity"{tuple_delimiter}"The team"{tuple_delimiter}"organization"{tuple_delimiter}"The team is portrayed as a group of individuals who have transitioned from passive observers to active participants in a mission, showing a dynamic change in their role."){record_delimiter}
-("relationship"{tuple_delimiter}"The team"{tuple_delimiter}"Washington"{tuple_delimiter}"The team receives communications from Washington, which influences their decision-making process."{tuple_delimiter}"decision-making, external influence"{tuple_delimiter}7){record_delimiter}
-("relationship"{tuple_delimiter}"The team"{tuple_delimiter}"Operation: Dulce"{tuple_delimiter}"The team is directly involved in Operation: Dulce, executing its evolved objectives and activities."{tuple_delimiter}"mission evolution, active participation"{tuple_delimiter}9){completion_delimiter}
-("content_keywords"{tuple_delimiter}"mission evolution, decision-making, active participation, cosmic significance"){completion_delimiter}
-#############################
+("entity"{tuple_delimiter}"OX40"{tuple_delimiter}"gene"{tuple_delimiter}"OX40 is a member of the TNF receptor superfamily and generates a potent costimulatory signal."){record_delimiter}
+("entity"{tuple_delimiter}"OX40L"{tuple_delimiter}"gene"{tuple_delimiter}"OX40L is the binding partner of OX40 and enhances T cell survival and B cell proliferation."){record_delimiter}
+("entity"{tuple_delimiter}"IL-2"{tuple_delimiter}"protein"{tuple_delimiter}"IL-2 production is upregulated by the interaction between OX40 and OX40L."){record_delimiter}
+("entity"{tuple_delimiter}"T cell"{tuple_delimiter}"cell"{tuple_delimiter}"T cell survival is enhanced by the costimulatory signal from OX40."){record_delimiter}
+("entity"{tuple_delimiter}"B cell"{tuple_delimiter}"cell"{tuple_delimiter}"B cell proliferation and differentiation are enhanced by OX40 interaction."){record_delimiter}
+("entity"{tuple_delimiter}"T-reg cell"{tuple_delimiter}"cell"{tuple_delimiter}"T-reg cell function is inactivated by OX40, unleashing nearby DCs."){record_delimiter}
+("entity"{tuple_delimiter}"DC"{tuple_delimiter}"cell"{tuple_delimiter}"DCs are unleashed after T-reg cell inactivation, allowing them to induce an adaptive immune response."){record_delimiter}
+("entity"{tuple_delimiter}"SSC"{tuple_delimiter}"disease"{tuple_delimiter}"Systemic sclerosis, where OX40 levels are found significantly increased in patients."){record_delimiter}
+("entity"{tuple_delimiter}"SLE"{tuple_delimiter}"disease"{tuple_delimiter}"Systemic lupus erythematosus, where OX40 levels are compared to those in SSC patients."){record_delimiter}
+("relationship"{tuple_delimiter}"OX40"{tuple_delimiter}"OX40L"{tuple_delimiter}"OX40 binds to OX40L and generates a costimulatory signal."{tuple_delimiter}6){record_delimiter}
+("relationship"{tuple_delimiter}"OX40L"{tuple_delimiter}"IL-2"{tuple_delimiter}"OX40L upregulates IL-2 production."{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"OX40L"{tuple_delimiter}"T cell"{tuple_delimiter}"OX40L enhances T cell survival."{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"OX40L"{tuple_delimiter}"B cell"{tuple_delimiter}"OX40L enhances B cell proliferation and differentiation."{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"OX40"{tuple_delimiter}"T-reg cell"{tuple_delimiter}"OX40 mediates inactivation of T-reg cell function."{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"OX40"{tuple_delimiter}"DC"{tuple_delimiter}"OX40 unleashes DCs by inactivating T-reg cells, allowing adaptive immune response."{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"OX40"{tuple_delimiter}"SSC"{tuple_delimiter}"OX40 levels are significantly increased in systemic sclerosis patients."{tuple_delimiter}6){record_delimiter}
+("relationship"{tuple_delimiter}"OX40"{tuple_delimiter}"SLE"{tuple_delimiter}"OX40 levels are compared between systemic sclerosis and lupus patients."{tuple_delimiter}6){record_delimiter}
+("content_keywords"{tuple_delimiter}"OX40, OX40L, TNF receptor superfamily, T cell survival, SSC genetic susceptibility"){completion_delimiter}
+######################
 Example 3:
 
-Entity_types: [person, role, technology, organization, event, location, concept]
+Entity_types: [gene,disease,snp]
 Text:
-their voice slicing through the buzz of activity. "Control may be an illusion when facing an intelligence that literally writes its own rules," they stated stoically, casting a watchful eye over the flurry of data.
-
-"It's like it's learning to communicate," offered Sam Rivera from a nearby interface, their youthful energy boding a mix of awe and anxiety. "This gives talking to strangers' a whole new meaning."
-
-Alex surveyed his team—each face a study in concentration, determination, and not a small measure of trepidation. "This might well be our first contact," he acknowledged, "And we need to be ready for whatever answers back."
-
-Together, they stood on the edge of the unknown, forging humanity's response to a message from the heavens. The ensuing silence was palpable—a collective introspection about their role in this grand cosmic play, one that could rewrite human history.
-
-The encrypted dialogue continued to unfold, its intricate patterns showing an almost uncanny anticipation
-#############
+Cartesian and regression tree analysis (CART) showing an interaction between the tumour necrosis factor ligand superfamily member 4 gene (TNFSF4) single nucleotide polymorphisms (snps) rs2205960 and rs944648 in systemic sclerosis (SSC). Red test result denotes SSC susceptibility factors.
+######################
 Output:
-("entity"{tuple_delimiter}"Sam Rivera"{tuple_delimiter}"person"{tuple_delimiter}"Sam Rivera is a member of a team working on communicating with an unknown intelligence, showing a mix of awe and anxiety."){record_delimiter}
-("entity"{tuple_delimiter}"Alex"{tuple_delimiter}"person"{tuple_delimiter}"Alex is the leader of a team attempting first contact with an unknown intelligence, acknowledging the significance of their task."){record_delimiter}
-("entity"{tuple_delimiter}"Control"{tuple_delimiter}"concept"{tuple_delimiter}"Control refers to the ability to manage or govern, which is challenged by an intelligence that writes its own rules."){record_delimiter}
-("entity"{tuple_delimiter}"Intelligence"{tuple_delimiter}"concept"{tuple_delimiter}"Intelligence here refers to an unknown entity capable of writing its own rules and learning to communicate."){record_delimiter}
-("entity"{tuple_delimiter}"First Contact"{tuple_delimiter}"event"{tuple_delimiter}"First Contact is the potential initial communication between humanity and an unknown intelligence."){record_delimiter}
-("entity"{tuple_delimiter}"Humanity's Response"{tuple_delimiter}"event"{tuple_delimiter}"Humanity's Response is the collective action taken by Alex's team in response to a message from an unknown intelligence."){record_delimiter}
-("relationship"{tuple_delimiter}"Sam Rivera"{tuple_delimiter}"Intelligence"{tuple_delimiter}"Sam Rivera is directly involved in the process of learning to communicate with the unknown intelligence."{tuple_delimiter}"communication, learning process"{tuple_delimiter}9){record_delimiter}
-("relationship"{tuple_delimiter}"Alex"{tuple_delimiter}"First Contact"{tuple_delimiter}"Alex leads the team that might be making the First Contact with the unknown intelligence."{tuple_delimiter}"leadership, exploration"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"Alex"{tuple_delimiter}"Humanity's Response"{tuple_delimiter}"Alex and his team are the key figures in Humanity's Response to the unknown intelligence."{tuple_delimiter}"collective action, cosmic significance"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"Control"{tuple_delimiter}"Intelligence"{tuple_delimiter}"The concept of Control is challenged by the Intelligence that writes its own rules."{tuple_delimiter}"power dynamics, autonomy"{tuple_delimiter}7){record_delimiter}
-("content_keywords"{tuple_delimiter}"first contact, control, communication, cosmic significance"){completion_delimiter}
-#############################
+("entity"{tuple_delimiter}"TNFSF4"{tuple_delimiter}"gene"{tuple_delimiter}"TNFSF4 is a gene from the tumour necrosis factor ligand superfamily member 4 that is associated with SSC susceptibility."){record_delimiter}
+("entity"{tuple_delimiter}"rs2205960"{tuple_delimiter}"snp"{tuple_delimiter}"Single nucleotide polymorphism rs2205960 of the TNFSF4 gene is linked to systemic sclerosis."){record_delimiter}
+("entity"{tuple_delimiter}"rs944648"{tuple_delimiter}"snp"{tuple_delimiter}"Single nucleotide polymorphism rs944648 of the TNFSF4 gene is associated with systemic sclerosis."){record_delimiter}
+("entity"{tuple_delimiter}"SSC"{tuple_delimiter}"disease"{tuple_delimiter}"Systemic sclerosis, a disease associated with TNFSF4 and snps rs2205960 and rs944648."){record_delimiter}
+("entity"{tuple_delimiter}"SSC"{tuple_delimiter}"disease"{tuple_delimiter}"Systemic sclerosis, also referred to as SSC, involves the fibrosis of skin and internal organs."){record_delimiter}
+("relationship"{tuple_delimiter}"TNFSF4"{tuple_delimiter}"rs2205960"{tuple_delimiter}"TNFSF4 and snp rs2205960 are associated with systemic sclerosis susceptibility"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"TNFSF4"{tuple_delimiter}"rs944648"{tuple_delimiter}"TNFSF4 and snp rs944648 are linked to systemic sclerosis"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"rs2205960"{tuple_delimiter}"SSC"{tuple_delimiter}"snp rs2205960 is associated with systemic sclerosis susceptibility"{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"rs944648"{tuple_delimiter}"SSC"{tuple_delimiter}"snp rs944648 is associated with systemic sclerosis susceptibility"{tuple_delimiter}7){record_delimiter}
+("content_keywords"{tuple_delimiter}"CART analysis, TNFSF4 gene, single nucleotide polymorphisms, SSC susceptibility, rs2205960"){completion_delimiter}
+############################
+Example 4:
+    
+Entity_types: [tissue, symptom, protein, disease]
+Text:
+Systemic sclerosis (SSC) is an autoimmune T-cell disease that is characterized by pathological fibrosis of the skin and internal organs. SSC is considered a prototype condition for studying the links between autoimmunity and fibrosis. Costimulatory pathways such as CD28/CTLA-4, ICOS-B7RP1, CD70-CD27, CD40-CD154, or OX40-OX40L play an essential role in the modulation of T-cell and inflammatory immune responses. A growing body of evidence suggests that T-cell costimulation signals might be implicated in the pathogenesis of SSC. CD28, CTLA-4, ICOS, and OX40L are overexpressed in patients with SSC, particularly in patients with cutaneous diffuse forms.
+######################
+Output:
+("entity"{tuple_delimiter}"CD28"{tuple_delimiter}"protein"{tuple_delimiter}"CD28 is a costimulatory protein involved in T-cell immune responses."){record_delimiter}
+("entity"{tuple_delimiter}"CTLA-4"{tuple_delimiter}"protein"{tuple_delimiter}"CTLA-4 is a protein associated with immune response regulation."){record_delimiter}
+("entity"{tuple_delimiter}"SSC"{tuple_delimiter}"disease"{tuple_delimiter}"Systemic sclerosis is an autoimmune disease causing fibrosis."){record_delimiter}
+("entity"{tuple_delimiter}"Skin"{tuple_delimiter}"tissue"{tuple_delimiter}"The skin is one of the tissues affected by systemic sclerosis."){record_delimiter}
+("entity"{tuple_delimiter}"Fibrosis"{tuple_delimiter}"symptom"{tuple_delimiter}"Fibrosis is characterized by excessive tissue scarring."){record_delimiter}
+("relationship"{tuple_delimiter}"OX40L"{tuple_delimiter}"SSC"{tuple_delimiter}"OX40L is overexpressed in patients with systemic sclerosis"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"CD28"{tuple_delimiter}"SSC"{tuple_delimiter}"CD28 is implicated in the pathogenesis of systemic sclerosis"{tuple_delimiter}10){record_delimiter}
+("content_keywords"{tuple_delimiter}"SSC, autoimmune T-cell disease, fibrosis, costimulatory pathways"){completion_delimiter}
+############################
+Example 5:
+
+Entity_types: [species_or_model, protein]
+Text:
+Increased expression of the protein p53 has been observed in mice exposed to oxidative stress, indicating a potential role in the cellular damage response.
+######################
+Output:
+("entity"{tuple_delimiter}"p53"{tuple_delimiter}"protein"{tuple_delimiter}"p53 is a protein involved in the cellular damage response."){record_delimiter}
+("entity"{tuple_delimiter}"Mice"{tuple_delimiter}"species_or_model"{tuple_delimiter}"Mice are a model organism used to study the effects of oxidative stress."){record_delimiter}
+("relationship"{tuple_delimiter}"p53"{tuple_delimiter}"Mice"{tuple_delimiter}"p53 is overexpressed in mice under oxidative stress conditions"{tuple_delimiter}5){record_delimiter}
+("content_keywords"{tuple_delimiter}"p53 protein, oxidative stress, cellular damage response, increased expression"){completion_delimiter}
+############################
+Example 6:
+
+Entity_types: [gene, disease]
+Text:
+Atopic dermatitis (AD) is a chronic, or chronically relapsing, inflammatory skin disease associated with asthma and allergic rhinitis, and is dominated by Th2 cells. 
+
+The co-stimulatory T-cell receptor OX40 and its ligand, OX40L, play a central role in the pathogenesis of AD, as their interactions are crucial for the generation of TH2 memory cells. 
+
+Using enzyme-linked immunoassay (ELISA) and flow cytometry on blood samples from patients with AD and healthy volunteers, this study shows that the serum level of soluble (s) OX40 is decreased in patients with AD, and the expression of OX40 by activated skin-homing CD4+ T cells is increased.
+######################
+Output:
+("entity"{tuple_delimiter}"AD"{tuple_delimiter}"disease"{tuple_delimiter}"Atopic dermatitis also referred as AD is a chronic, relapsing inflammatory skin disease associated with asthma and allergic rhinitis."){record_delimiter}
+("entity"{tuple_delimiter}"OX40"{tuple_delimiter}"gene"{tuple_delimiter}"OX40 is a co-stimulatory T-cell receptor crucial for generating TH2 memory cells in AD."){record_delimiter}
+("entity"{tuple_delimiter}"OX40L"{tuple_delimiter}"gene"{tuple_delimiter}"OX40L, the ligand for OX40, plays a central role in AD pathogenesis by mediating T-cell costimulation."){record_delimiter}
+("entity"{tuple_delimiter}"sOX40"{tuple_delimiter}"gene"{tuple_delimiter}"sOX40 is the soluble form of OX40, with decreased serum levels observed in AD patients."){record_delimiter}
+("relationship"{tuple_delimiter}"OX40"{tuple_delimiter}"sOX40"{tuple_delimiter}"sOX40 is serum level of OX40, basically both are same"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"AD"{tuple_delimiter}"sOX40"{tuple_delimiter}"AD is associated with decreased serum levels of sOX40, indicating altered OX40 system activity"{tuple_delimiter}8){record_delimiter}
+("content_keywords"{tuple_delimiter}"AD, OX40, OX40L, T-cell receptor, TH2 memory cells, chronic inflammation, asthma, allergic rhinitis, ELISA, flow cytometry, immunofluorescence, skin biopsies, costimulation"{completion_delimiter}
+############################
 -Real Data-
 ######################
 Entity_types: {entity_types}
@@ -118,13 +167,14 @@ Output:
 """
 
 
+
 PROMPTS[
     "summarize_entity_descriptions"
-] = """You are a helpful assistant responsible for generating a comprehensive summary of the data provided below.
+] = """You are an expert biologist, having done extensive research on automimune diseases and associated targets. You are responsible for generating a comprehensive summary of the data provided below, taken from medical literature.
 Given one or two entities, and a list of descriptions, all related to the same entity or group of entities.
 Please concatenate all of these into a single, comprehensive description. Make sure to include information collected from all the descriptions.
 If the provided descriptions are contradictory, please resolve the contradictions and provide a single, coherent summary.
-Make sure it is written in third person, and include the entity names so we the have full context.
+Make sure it is written in third person, and include the entity names so we have the full context. Use {language} as output language.
 
 #######
 -Data-
@@ -133,6 +183,7 @@ Description List: {description_list}
 #######
 Output:
 """
+
 
 PROMPTS[
     "entiti_continue_extraction"
@@ -178,120 +229,106 @@ This pool is in the form of a dictionary, where the key represents the Type you 
 ######################
 Example 1:
 
-Query: "How does international trade influence global economic stability?"
+Query: "How do antibiotics work against bacterial infections?"
 Answer type pool: {{
- 'PERSONAL LIFE': ['FAMILY TIME', 'HOME MAINTENANCE'],
- 'STRATEGY': ['MARKETING PLAN', 'BUSINESS EXPANSION'],
- 'SERVICE FACILITATION': ['ONLINE SUPPORT', 'CUSTOMER SERVICE TRAINING'],
- 'PERSON': ['JANE DOE', 'JOHN SMITH'],
- 'FOOD': ['PASTA', 'SUSHI'],
- 'EMOTION': ['HAPPINESS', 'ANGER'],
- 'PERSONAL EXPERIENCE': ['TRAVEL ABROAD', 'STUDYING ABROAD'],
- 'INTERACTION': ['TEAM MEETING', 'NETWORKING EVENT'],
- 'BEVERAGE': ['COFFEE', 'TEA'],
- 'PLAN': ['ANNUAL BUDGET', 'PROJECT TIMELINE'],
- 'GEO': ['NEW YORK CITY', 'SOUTH AFRICA'],
- 'GEAR': ['CAMPING TENT', 'CYCLING HELMET'],
- 'EMOJI': ['🎉', '🚀'],
- 'BEHAVIOR': ['POSITIVE FEEDBACK', 'NEGATIVE CRITICISM'],
- 'TONE': ['FORMAL', 'INFORMAL'],
- 'LOCATION': ['DOWNTOWN', 'SUBURBS']
+'BIOLOGICAL PROCESS': ['CELL WALL DISRUPTION', 'PROTEIN SYNTHESIS INHIBITION'],
+'ORGANISM': ['BACTERIA', 'FUNGI'],
+'MEDICAL CONDITION': ['BACTERIAL INFECTION', 'ANTIBIOTIC RESISTANCE'],
+'PROTEIN': ['RIBOSOMES', 'BETA-LACTAMASE'],
+'GENE': ['MRSA GENE', 'VANCOMYCIN RESISTANCE GENE'],
+'MOLECULE': ['PENICILLIN', 'TETRACYCLINE'],
+'RESEARCH': ['MIC TESTING', 'DRUG DISCOVERY'],
+'MEDICAL TREATMENT': ['ANTIBIOTICS', 'COMBINATION THERAPY'],
+'LAB TECHNIQUE': ['GRAM STAINING', 'CULTURE TESTING'],
+'BEHAVIOR': ['ANTIMICROBIAL ACTION', 'BACTERIAL GROWTH INHIBITION'],
+'EMOJI': ['💊', '🦠'],
+'TONE': ['SCIENTIFIC', 'INFORMATIVE'],
+'LOCATION': ['HOSPITAL', 'MICROBIOLOGY LAB']
 }}
+
 ################
 Output:
 {{
-  "answer_type_keywords": ["STRATEGY","PERSONAL LIFE"],
-  "entities_from_query": ["Trade agreements", "Tariffs", "Currency exchange", "Imports", "Exports"]
+  "answer_type_keywords": ["BIOLOGICAL PROCESS", "MOLECULE", "MEDICAL TREATMENT"],
+  "entities_from_query": ["Antibiotics", "Bacterial cell wall", "Ribosome inhibition", "Resistance genes"]
 }}
 #############################
 Example 2:
 
-Query: "When was SpaceX's first rocket launch?"
+Query: "How does the immune system respond to viral infections?"
 Answer type pool: {{
- 'DATE AND TIME': ['2023-10-10 10:00', 'THIS AFTERNOON'],
- 'ORGANIZATION': ['GLOBAL INITIATIVES CORPORATION', 'LOCAL COMMUNITY CENTER'],
- 'PERSONAL LIFE': ['DAILY EXERCISE ROUTINE', 'FAMILY VACATION PLANNING'],
- 'STRATEGY': ['NEW PRODUCT LAUNCH', 'YEAR-END SALES BOOST'],
- 'SERVICE FACILITATION': ['REMOTE IT SUPPORT', 'ON-SITE TRAINING SESSIONS'],
- 'PERSON': ['ALEXANDER HAMILTON', 'MARIA CURIE'],
- 'FOOD': ['GRILLED SALMON', 'VEGETARIAN BURRITO'],
- 'EMOTION': ['EXCITEMENT', 'DISAPPOINTMENT'],
- 'PERSONAL EXPERIENCE': ['BIRTHDAY CELEBRATION', 'FIRST MARATHON'],
- 'INTERACTION': ['OFFICE WATER COOLER CHAT', 'ONLINE FORUM DEBATE'],
- 'BEVERAGE': ['ICED COFFEE', 'GREEN SMOOTHIE'],
- 'PLAN': ['WEEKLY MEETING SCHEDULE', 'MONTHLY BUDGET OVERVIEW'],
- 'GEO': ['MOUNT EVEREST BASE CAMP', 'THE GREAT BARRIER REEF'],
- 'GEAR': ['PROFESSIONAL CAMERA EQUIPMENT', 'OUTDOOR HIKING GEAR'],
- 'EMOJI': ['📅', '⏰'],
- 'BEHAVIOR': ['PUNCTUALITY', 'HONESTY'],
- 'TONE': ['CONFIDENTIAL', 'SATIRICAL'],
- 'LOCATION': ['CENTRAL PARK', 'DOWNTOWN LIBRARY']
+'BIOLOGICAL PROCESS': ['PHAGOCYTOSIS', 'ANTIBODY PRODUCTION'],
+'ORGANISM': ['HUMAN', 'BACTERIA'],
+'MEDICAL CONDITION': ['AUTOIMMUNE DISEASE', 'INFLAMMATION'],
+'PROTEIN': ['CYTOKINES', 'IMMUNOGLOBULINS'],
+'GENE': ['TP53', 'HLA-DRB1'],
+'MOLECULE': ['RNA', 'DNA'],
+'RESEARCH': ['CLINICAL TRIALS', 'GENETIC STUDIES'],
+'MEDICAL TREATMENT': ['VACCINATION', 'ANTIVIRAL THERAPY'],
+'LAB TECHNIQUE': ['PCR TESTING', 'FLOW CYTOMETRY'],
+'BEHAVIOR': ['IMMUNE RESPONSE', 'INFLAMMATORY REACTION'],
+'EMOJI': ['🧬', '🦠'],
+'TONE': ['SCIENTIFIC', 'INFORMATIVE'],
+'LOCATION': ['LABORATORY', 'HOSPITAL']
 }}
 
 ################
 Output:
 {{
-  "answer_type_keywords": ["DATE AND TIME", "ORGANIZATION", "PLAN"],
-  "entities_from_query": ["SpaceX", "Rocket launch", "Aerospace", "Power Recovery"]
-
+  "answer_type_keywords": ["BIOLOGICAL PROCESS", "PROTEIN", "MEDICAL TREATMENT"],
+  "entities_from_query": ["Immune response", "T cells", "Cytokine release", "Viral neutralization"]
 }}
 #############################
 Example 3:
 
-Query: "What is the role of education in reducing poverty?"
+Query: "How does the human body regulate blood pressure?"
 Answer type pool: {{
- 'PERSONAL LIFE': ['MANAGING WORK-LIFE BALANCE', 'HOME IMPROVEMENT PROJECTS'],
- 'STRATEGY': ['MARKETING STRATEGIES FOR Q4', 'EXPANDING INTO NEW MARKETS'],
- 'SERVICE FACILITATION': ['CUSTOMER SATISFACTION SURVEYS', 'STAFF RETENTION PROGRAMS'],
- 'PERSON': ['ALBERT EINSTEIN', 'MARIA CALLAS'],
- 'FOOD': ['PAN-FRIED STEAK', 'POACHED EGGS'],
- 'EMOTION': ['OVERWHELM', 'CONTENTMENT'],
- 'PERSONAL EXPERIENCE': ['LIVING ABROAD', 'STARTING A NEW JOB'],
- 'INTERACTION': ['SOCIAL MEDIA ENGAGEMENT', 'PUBLIC SPEAKING'],
- 'BEVERAGE': ['CAPPUCCINO', 'MATCHA LATTE'],
- 'PLAN': ['ANNUAL FITNESS GOALS', 'QUARTERLY BUSINESS REVIEW'],
- 'GEO': ['THE AMAZON RAINFOREST', 'THE GRAND CANYON'],
- 'GEAR': ['SURFING ESSENTIALS', 'CYCLING ACCESSORIES'],
- 'EMOJI': ['💻', '📱'],
- 'BEHAVIOR': ['TEAMWORK', 'LEADERSHIP'],
- 'TONE': ['FORMAL MEETING', 'CASUAL CONVERSATION'],
- 'LOCATION': ['URBAN CITY CENTER', 'RURAL COUNTRYSIDE']
+'BIOLOGICAL PROCESS': ['VASODILATION', 'RENIN-ANGIOTENSIN SYSTEM'],
+'ORGANISM': ['HUMAN', 'MAMMALS'],
+'MEDICAL CONDITION': ['HYPERTENSION', 'HYPOTENSION'],
+'PROTEIN': ['ANGIOTENSIN', 'ENDOTHELIN'],
+'GENE': ['ACE GENE', 'NOS3'],
+'MOLECULE': ['NITRIC OXIDE', 'SODIUM IONS'],
+'RESEARCH': ['CARDIOVASCULAR STUDIES', 'BLOOD PRESSURE MONITORING'],
+'MEDICAL TREATMENT': ['ANTIHYPERTENSIVE DRUGS', 'LIFESTYLE MODIFICATION'],
+'LAB TECHNIQUE': ['SPHYGMOMANOMETRY', 'BLOOD TESTING'],
+'BEHAVIOR': ['STRESS RESPONSE', 'SALT INTAKE REGULATION'],
+'EMOJI': ['❤️', '🩸'],
+'TONE': ['SCIENTIFIC', 'INFORMATIVE'],
+'LOCATION': ['CARDIOLOGY CLINIC', 'PHARMACY']
 }}
 
 ################
 Output:
 {{
-  "answer_type_keywords": ["STRATEGY", "PERSON"],
-  "entities_from_query": ["School access", "Literacy rates", "Job training", "Income inequality"]
+  "answer_type_keywords": ["BIOLOGICAL PROCESS", "MEDICAL CONDITION", "PROTEIN"],
+  "entities_from_query": ["Blood pressure regulation", "Renin-angiotensin system", "Vasodilation", "Cardiac output"]
 }}
 #############################
 Example 4:
 
-Query: "Where is the capital of the United States?"
+Query: "What is the role of mitochondria in energy production?"
 Answer type pool: {{
- 'ORGANIZATION': ['GREENPEACE', 'RED CROSS'],
- 'PERSONAL LIFE': ['DAILY WORKOUT', 'HOME COOKING'],
- 'STRATEGY': ['FINANCIAL INVESTMENT', 'BUSINESS EXPANSION'],
- 'SERVICE FACILITATION': ['ONLINE SUPPORT', 'CUSTOMER SERVICE TRAINING'],
- 'PERSON': ['ALBERTA SMITH', 'BENJAMIN JONES'],
- 'FOOD': ['PASTA CARBONARA', 'SUSHI PLATTER'],
- 'EMOTION': ['HAPPINESS', 'SADNESS'],
- 'PERSONAL EXPERIENCE': ['TRAVEL ADVENTURE', 'BOOK CLUB'],
- 'INTERACTION': ['TEAM BUILDING', 'NETWORKING MEETUP'],
- 'BEVERAGE': ['LATTE', 'GREEN TEA'],
- 'PLAN': ['WEIGHT LOSS', 'CAREER DEVELOPMENT'],
- 'GEO': ['PARIS', 'NEW YORK'],
- 'GEAR': ['CAMERA', 'HEADPHONES'],
- 'EMOJI': ['🏢', '🌍'],
- 'BEHAVIOR': ['POSITIVE THINKING', 'STRESS MANAGEMENT'],
- 'TONE': ['FRIENDLY', 'PROFESSIONAL'],
- 'LOCATION': ['DOWNTOWN', 'SUBURBS']
+'BIOLOGICAL PROCESS': ['CELLULAR RESPIRATION', 'ATP SYNTHESIS'],
+'ORGANISM': ['EUKARYOTES', 'HUMAN'],
+'MEDICAL CONDITION': ['MITOCHONDRIAL DISEASE', 'OXIDATIVE STRESS'],
+'PROTEIN': ['ATP SYNTHASE', 'CYTOCHROME C'],
+'GENE': ['MT-ND1', 'MT-COX1'],
+'MOLECULE': ['ADENOSINE TRIPHOSPHATE (ATP)', 'OXYGEN'],
+'RESEARCH': ['MITOCHONDRIAL STUDIES', 'ENERGY METABOLISM'],
+'MEDICAL TREATMENT': ['MITOCHONDRIAL THERAPY', 'ANTIOXIDANT SUPPLEMENTATION'],
+'LAB TECHNIQUE': ['MITOCHONDRIAL STAINING', 'OXIDATIVE PHOSPHORYLATION ASSAYS'],
+'BEHAVIOR': ['ENERGY METABOLISM', 'AEROBIC RESPIRATION'],
+'EMOJI': ['🔋', '🧬'],
+'TONE': ['SCIENTIFIC', 'INFORMATIVE'],
+'LOCATION': ['CELL BIOLOGY LAB', 'MITOCHONDRIA RESEARCH CENTER']
 }}
+
 ################
 Output:
 {{
-  "answer_type_keywords": ["LOCATION"],
-  "entities_from_query": ["capital of the United States", "Washington", "New York"]
+  "answer_type_keywords": ["BIOLOGICAL PROCESS", "PROTEIN", "MOLECULE"],
+  "entities_from_query": ["Mitochondria", "ATP production", "Cellular respiration", "Electron transport chain"]
 }}
 #############################
 
@@ -354,32 +391,62 @@ Given the query, list both high-level and low-level keywords. High-level keyword
 ######################
 Example 1:
 
-Query: "How does international trade influence global economic stability?"
+Query : "What are the genetic associations between TNFSF4 polymorphisms and systemic sclerosis susceptibility?"
 ################
 Output:
 {{
-  "high_level_keywords": ["International trade", "Global economic stability", "Economic impact"],
-  "low_level_keywords": ["Trade agreements", "Tariffs", "Currency exchange", "Imports", "Exports"]
-}}
+    "high_level_keywords": ["TNFSF4 gene", "Systemic sclerosis", "genetic susceptibility", "Autoimmune disease"],
+    "low_level_keywords": ["snp variants", "rs1234314", "rs2205960", "rs844648", "OX40L protein", "Allele frequency"]
+}
 #############################
 Example 2:
 
-Query: "What are the environmental consequences of deforestation on biodiversity?"
+Query : "How do TNFSF4 polymorphisms affect different clinical subsets of systemic sclerosis?"
 ################
 Output:
 {{
-  "high_level_keywords": ["Environmental consequences", "Deforestation", "Biodiversity loss"],
-  "low_level_keywords": ["Species extinction", "Habitat destruction", "Carbon emissions", "Rainforest", "Ecosystem"]
+    "high_level_keywords": ["Clinical manifestations", "disease subtypes", "genetic associations", "Autoantibody profiles"],
+    "low_level_keywords": ["Limited SSC", "Diffuse SSC", "Anti-centromere antibodies", "Anti-topoisomerase antibodies", "RNA polymerase III antibodies"]
 }}
 #############################
 Example 3:
 
-Query: "What is the role of education in reducing poverty?"
+Query : "What is the role of OX40L in immune regulation and systemic sclerosis pathogenesis?"
 ################
 Output:
 {{
-  "high_level_keywords": ["Education", "Poverty reduction", "Socioeconomic development"],
-  "low_level_keywords": ["School access", "Literacy rates", "Job training", "Income inequality"]
+    "high_level_keywords": ["Immune regulation", "disease pathogenesis", "T cell responses", "Costimulatory molecules"],
+    "low_level_keywords": ["T helper cells", "Regulatory T cells", "Dendritic cells", "Cytokine production", "B cell differentiation", "Antibody production"]
+}}
+#############################
+Example 4:
+
+Query : "How does OX40 and OX40L expression affect atopic dermatitis pathogenesis and progression?"
+################
+Output: 
+{{
+    "high_level_keywords": ["OX40", "Atopic dermatitis", "Immune system regulation", "T cell response"],
+    "low_level_keywords": ["SOX40", "T cell memory", "Skin inflammation", "Mast cells", "SCORAD index", "Serum levels", "CLA+ T cells"]
+}}
+#############################
+Example 5:
+
+Query: "What is the relationship between OX40 expression and disease severity in atopic dermatitis patients?"
+################
+Output: 
+{{
+    "high_level_keywords": ["OX40 expression", "disease severity", "Clinical correlation", "Immunological markers"],
+    "low_level_keywords": ["SCORAD correlation", "Serum biomarkers", "T cell populations", "Skin biopsies", "IgE levels", "disease activity"]
+}}
+#############################
+Example 6:
+
+Query: "How do OX40+ and OX40L+ cells interact in atopic dermatitis skin lesions?"
+################
+Output: 
+{{
+    "high_level_keywords": ["cell interaction", "Skin pathology", "Immune cell localization", "Inflammatory response"],
+    "low_level_keywords": ["cell co-localization", "Dermal expression", "Mast cell markers", "Tryptase staining", "tissue analysis", "Immunofluorescence"]
 }}
 #############################
 -Real Data-
