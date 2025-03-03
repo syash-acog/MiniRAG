@@ -24,4 +24,3 @@ examples/output/
 .DS_Store
 #Remove config.ini from repo
 *.ini
-entity_resolve.ipynb
