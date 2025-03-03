@@ -32,3 +32,5 @@ tqdm
 xxhash
 
 # Extra libraries are installed when needed using pipmaster
+Levenshtein
+neo4j
